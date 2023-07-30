@@ -1,6 +1,5 @@
 """Python file to serve as the frontend"""
 import streamlit as st
-from streamlit_chat import message
 
 import pandas as pd
 import json
