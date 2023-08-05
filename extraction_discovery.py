@@ -4,21 +4,26 @@ import streamlit as st
 import pandas as pd
 import json
 import datetime
+import pyodbc
+from sqlalchemy import create_engine
 
 from langchain.chat_models import ChatOpenAI
 from langchain.chains import create_extraction_chain, create_extraction_chain_pydantic
 from langchain.llms import OpenAI
 from langchain.prompts import ChatPromptTemplate
 
-# Sample prompts relevant to MPV
-inp = """
-The Hamilton Band is playing tonight at The Broadway Oyster Bar. Show starts t 7:00 PM and there is a $10 cover.
-        """
-inp_happy_hour = """
-Wheelhouse Downtown is having a happy hour from 11-3 on 7/30. Half off domestics and $2 well drinks.
-"""
-
 OPEN_AI_API_KEY = st.secrets["open_api_key"]
+
+SQL_SERVER_NAME = st.secrets["sql_server_name"]
+SQL_DATABASE = st.secrets["sql_database"]
+SQL_USERNAME = st.secrets["sql_username"]
+SQL_PASSWORD = st.secrets["sql_password"]
+SQL_DRIVER = st.secrets["sql_driver"]
+
+
+# Establish a connection
+params = f"Driver={SQL_DRIVER};Server=tcp:{SQL_SERVER_NAME}.database.windows.net,1433;Database={SQL_DATABASE};Uid={SQL_USERNAME};Pwd={SQL_PASSWORD};Encrypt=yes;TrustServerCertificate=no;Connection Timeout=30;"
+engine = create_engine("mssql+pyodbc:///?odbc_connect=%s" % params)
 
 # Defines what model should be attempting to extract from user prompt
 schema = {
@@ -32,7 +37,7 @@ schema = {
         "band_name": {"type": "string"},
         "happy_hour_deal": {"type": "string"},
     },
-    "required": ["business_name", "event_type"],
+    "required": ["business_name", "event_type", "event_date"],
 }
 
 def get_text():
@@ -75,12 +80,12 @@ def time_convert_llm(event_time):
 
 
 # UI
-st.set_page_config(page_title="Project Louru | Alpha Extractor", page_icon=":robot:")
-st.header("Experience Manager | Project Louru")
+st.set_page_config(page_title="Project Louru | Experience Portal", page_icon=":robot:")
+st.header("Louru Experience Portal (Alpha)🎸🍝🍻")
 st.markdown(""" 
-    Welcome to the **Louru Experience Manager** (Alpha)! To add your upcoming experience, simply provide its name, date, time, location, a brief description, and any other relevant details. 
+    Welcome to the **Louru Experience Portal** (Alpha)! To add your upcoming experience, simply provide its name, date, time, location, a brief description, and any other relevant details. 
 
-    For example: "Post Malone is playing tonight at The Broadway Oyster Bar. Show is from 7PM to 10PM. There is a $10 cover. $2 Beers and 1/2 Well Drinks"
+    For example: "Post Malone is playing tonight at The Broadway Oyster Bar. Show is from 7PM to 10PM. There is a $10 cover.  Deals are 1/2 Well Drinks and apps"
 
     Let's share your event with the community and make it a memorable experience for everyone!
 """)
@@ -109,42 +114,59 @@ if user_input:
     
 
     with st.chat_message("user"):
-        st.write("Does the below look correct? If so press submit")
-        st.write("If changes are needed, please make them before submitting.")
+        st.write("Thanks 🙏 Please confirm we understood you correctly, and press submit to share your awesome experience with the world!")
+        st.write("Feel free to make changes to the below before submitting.")
 
 
         with st.form('confirmationForm'):
 
+            form_data_structure = {
+                'business_name': pd.Series(dtype='object'),      
+                'event_type': pd.Series(dtype='object'),    
+                'event_price': pd.Series(dtype='int'),    
+                'event_date': pd.Series(dtype='datetime64[ns]'),    
+                'event_start_time': pd.Series(dtype='datetime64[ns]'),    
+                'event_end_time': pd.Series(dtype='datetime64[ns]'),    
+                'band_name': pd.Series(dtype='object'),
+                'happy_hour_deal': pd.Series(dtype='object')   
+            }
+            form_response_df = pd.DataFrame(form_data_structure)
+            form_response_df.loc[df.shape[0]] = [None] * form_response_df.shape[1]
+
             col1, col2 = st.columns(2)
 
             with col1:
-                st.text_input(value=df['business_name'], label='Business Name')
+                if 'business_name' in df:
+                    form_response_df['business_name'].iloc[0]= st.text_input(value=df['business_name'], label='Business Name')
 
-                st.text_input(value=df['event_type'], label='Experience Type')
+                if 'event_type' in df:
+                    form_response_df['event_type'] = st.text_input(value=df['event_type'], label='Experience Type')
                 
                 if 'event_price' in df:
-                    st.number_input(value=df['event_price'], label='Experience Price', min_value=0)
+                    form_response_df['event_price'] = st.number_input(value=df['event_price'], label='Experience Price', min_value=0)
                 
                 if 'happy_hour_deal' in df:
-                    st.text_input(value=df['happy_hour_deal'], label='Happy Hour Deal')
+                    form_response_df['happy_hour_deal'] = st.text_input(value=df['happy_hour_deal'], label='Happy Hour Deal')
 
             with col2: 
                 if 'band_name' in df:
-                    st.text_input(value=df['band_name'], label='Band Name')
+                    form_response_df['band_name'] = st.text_input(value=df['band_name'], label='Band Name')
 
                 if 'event_date' in df:
-                    st.date_input(value=datetime.date(date_df['year'], date_df['month'], date_df['day']), label='Experience Date')
+                    form_response_df['event_date'] = st.date_input(value=datetime.date(date_df['year'], date_df['month'], date_df['day']), label='Experience Date')
 
                 if 'event_start_time' in df:
-                    st.time_input(value=datetime.time(start_time_df['hour'], start_time_df['minute']), label='Experience Start Time')
+                    form_response_df['event_start_time'] = st.time_input(value=datetime.time(start_time_df['hour'], start_time_df['minute']), label='Experience Start Time')
 
                 if 'event_end_time' in df:
-                    st.time_input(value=datetime.time(end_time_df['hour'], end_time_df['minute']), label='Experience End Time')
+                    form_response_df['event_end_time'] = st.time_input(value=datetime.time(end_time_df['hour'], end_time_df['minute']), label='Experience End Time')
 
 
             submit = st.form_submit_button('Submit')
 
             if submit:
                 'Thank you!'
+                st.data_editor(form_response_df)
+                form_response_df.to_sql('extraction_tst', con=engine, if_exists='append', index=False, schema='louru')
 
 
