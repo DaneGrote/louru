@@ -3,3 +3,4 @@ pandas
 openai
 streamlit-chat
 datetime
+pymssql
