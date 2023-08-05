@@ -3,6 +3,6 @@ pandas
 openai
 streamlit-chat
 datetime
-pymssql
 sqlalchemy
 pyodbc
+snowflake-connector-python

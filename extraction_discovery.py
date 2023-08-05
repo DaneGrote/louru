@@ -5,6 +5,7 @@ import pandas as pd
 import json
 import datetime
 import pyodbc
+import snowflake.connector
 from sqlalchemy import create_engine
 
 from langchain.chat_models import ChatOpenAI
@@ -14,16 +15,30 @@ from langchain.prompts import ChatPromptTemplate
 
 OPEN_AI_API_KEY = st.secrets["open_api_key"]
 
-SQL_SERVER_NAME = st.secrets["sql_server_name"]
-SQL_DATABASE = st.secrets["sql_database"]
-SQL_USERNAME = st.secrets["sql_username"]
-SQL_PASSWORD = st.secrets["sql_password"]
-SQL_DRIVER = st.secrets["sql_driver"]
+SF_ACCOUNT = st.secrets["sf_account"]
+SF_DATABASE = st.secrets["sf_database"]
+SF_SCHEMA = st.secrets["sf_schema"]
+SF_USERNAME = st.secrets["sf_username"]
+SF_PASSWORD = st.secrets["sf_password"]
+
+
+conn = snowflake.connector.connect(
+    user=SF_USERNAME,
+    password=SF_PASSWORD,
+    account=SF_ACCOUNT,
+    database=SF_DATABASE,
+    schema=SF_SCHEMA
+)
+
+connection_string = f'snowflake://{SF_USERNAME}:{SF_PASSWORD}@{SF_ACCOUNT}/{SF_DATABASE}/{SF_SCHEMA}'
+
+# Create an SQLAlchemy engine
+engine = create_engine(connection_string)
 
 
 # Establish a connection
-params = f"Driver={SQL_DRIVER};Server=tcp:{SQL_SERVER_NAME}.database.windows.net,1433;Database={SQL_DATABASE};Uid={SQL_USERNAME};Pwd={SQL_PASSWORD};Encrypt=yes;TrustServerCertificate=no;Connection Timeout=30;"
-engine = create_engine("mssql+pyodbc:///?odbc_connect=%s" % params)
+#params = f"Driver={SQL_DRIVER};Server=tcp:{SQL_SERVER_NAME}.database.windows.net,1433;Database={SQL_DATABASE};Uid={SQL_USERNAME};Pwd={SQL_PASSWORD};Encrypt=yes;TrustServerCertificate=no;Connection Timeout=30;"
+#engine = create_engine("mssql+pyodbc:///?odbc_connect=%s" % params)
 
 # Defines what model should be attempting to extract from user prompt
 schema = {
@@ -167,6 +182,6 @@ if user_input:
             if submit:
                 st.write(f"Thank you, your {form_response_df['event_type']} is going to be a HIT! 🎉")
                 st.data_editor(form_response_df)
-                form_response_df.to_sql('extraction_tst', con=engine, if_exists='append', index=False, schema='louru')
+                form_response_df.to_sql('experiences_001', con=engine, if_exists='append', index=False)
 
 
