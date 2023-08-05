@@ -1,4 +1,5 @@
 langchain
+landchain-experimental
 pandas
 openai
 streamlit-chat
