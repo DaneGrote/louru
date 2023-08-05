@@ -18,9 +18,7 @@ inp_happy_hour = """
 Wheelhouse Downtown is having a happy hour from 11-3 on 7/30. Half off domestics and $2 well drinks.
 """
 
-#OPEN_AI_API_KEY = st.secrets["open_api_key"]
-OPEN_AI_API_KEY = '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'
-
+OPEN_AI_API_KEY = st.secrets["open_api_key"]
 
 # Defines what model should be attempting to extract from user prompt
 schema = {
