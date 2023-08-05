@@ -6,3 +6,4 @@ datetime
 sqlalchemy
 pyodbc
 snowflake-connector-python
+snowflake-sqlalchemy

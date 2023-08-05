@@ -7,6 +7,7 @@ import datetime
 import pyodbc
 import snowflake.connector
 from sqlalchemy import create_engine
+import snowflake.sqlalchemy
 
 from langchain.chat_models import ChatOpenAI
 from langchain.chains import create_extraction_chain, create_extraction_chain_pydantic
