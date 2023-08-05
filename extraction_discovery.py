@@ -4,6 +4,7 @@ import streamlit as st
 import pandas as pd
 import json
 import datetime
+import pyodbc
 from sqlalchemy import create_engine
 
 from langchain.chat_models import ChatOpenAI
@@ -164,7 +165,7 @@ if user_input:
             submit = st.form_submit_button('Submit')
 
             if submit:
-                'Thank you!'
+                st.write(f"Thank you, your {form_response_df['event_type']} is going to be a HIT! 🎉")
                 st.data_editor(form_response_df)
                 form_response_df.to_sql('extraction_tst', con=engine, if_exists='append', index=False, schema='louru')
 
