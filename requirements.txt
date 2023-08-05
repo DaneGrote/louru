@@ -4,3 +4,4 @@ openai
 streamlit-chat
 datetime
 pymssql
+sqlalchemy

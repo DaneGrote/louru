@@ -4,7 +4,6 @@ import streamlit as st
 import pandas as pd
 import json
 import datetime
-import pyodbc
 from sqlalchemy import create_engine
 
 from langchain.chat_models import ChatOpenAI
