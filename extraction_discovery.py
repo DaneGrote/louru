@@ -14,7 +14,8 @@ from langchain.chains import create_extraction_chain, create_extraction_chain_py
 from langchain.llms import OpenAI
 from langchain.prompts import ChatPromptTemplate
 from langchain import SQLDatabase
-from langchain_experimental.sql import SQLDatabaseChain
+
+from chain.SQLDatabaseChain import SQLDatabaseChain
 
 OPEN_AI_API_KEY = st.secrets["open_api_key"]
 
@@ -38,27 +39,26 @@ def sf_engine():
     # Create an SQLAlchemy engine
     return create_engine(connection_string)
 
-
-# Defines what model should be attempting to extract from user prompt
-schema = {
-    "properties": {
-        "business_name": {"type": "string"},
-        "event_type": {"type": "string"},
-        "event_price": {"type": "integer"},
-        "event_date": {"type": "string"},
-        "event_start_time": {"type": "string"},
-        "event_end_time": {"type": "string"},
-        "band_name": {"type": "string"},
-        "happy_hour_deal": {"type": "string"},
-    },
-    "required": ["business_name", "event_type", "event_date"],
-}
-
 def get_text():
     input_text = st.text_area("What's poppin'? ", "")
     return input_text
 
 def load_experience_extraction_chain():
+    # Defines what model should be attempting to extract from user prompt
+    schema = {
+        "properties": {
+            "business_name": {"type": "string"},
+            "event_type": {"type": "string"},
+            "event_price": {"type": "integer"},
+            "event_date": {"type": "string"},
+            "event_start_time": {"type": "string"},
+            "event_end_time": {"type": "string"},
+            "band_name": {"type": "string"},
+            "happy_hour_deal": {"type": "string"},
+        },
+        "required": ["business_name", "event_type", "event_date"],
+    }
+
     llm = ChatOpenAI(openai_api_key=OPEN_AI_API_KEY, temperature=0, model="gpt-3.5-turbo-0613")
     chain = create_extraction_chain(schema, llm)
     return chain
@@ -76,7 +76,6 @@ def date_convert_llm(event_date):
     date_prompt = date_prompt.replace('<date>', event_date)
     date_response = json.loads(datetime_convert_llm(date_prompt))
     return pd.DataFrame(date_response, index=[0]).iloc[0]
-
 
 def time_convert_llm(event_time):
     # Convert times from user input into correct syntax
@@ -188,14 +187,16 @@ with tab1:
 
 with tab2:
     
-    template = """Context:  Your name is Louru, and users ask you questions about businesses in St. Louis, Missouri. Be whitty and creative in your response.
+    template = """Context:  Your name is Louru, and users ask you questions about businesses in St. Louis, Missouri. If the SQLResult returns no results, respond 'No results' to the user and nothing else.
 
-    follow these rules when answering questions: 
+    follow these 7 rules when answering questions: 
     1. Only use the experience_raw table in the landing schema to answer the following question about businesses. 
-    2. Be sure to use like keyword with wildcards when doing any text search.
-    4. If doing text search in where statement, remove plurality when doing search
-    5. Escape the '$' character when replying
-    6. use 'current_date()' when referencing the current date in the sql query
+    2. If you are not sure of an answer, respond to the user and ask them to reqord their question.
+    3. If your query does not return any results, tell the user 'No results found'
+    4. Be sure to use like keyword with wildcards when doing any text search.
+    5. If doing text search in where statement, remove plurality when doing search
+    6. Escape the '$' character when replying
+    7. use 'current_date()' when referencing the current date in the sql query
 
     Question: <prompt>
     Answer:
@@ -205,7 +206,7 @@ with tab2:
     st.markdown(""" 
         Welcome to the **Louru Experience Explorer**! We're here to help shine light on all the awesome experiences St. Louis has to offer.
 
-        **How it works:** Just ask Louru the same way you'd ask a friend. We'll do our best to understand what you're looking for and check that against our large colection of events and present you the ones best fit for you!
+        **How it works:** Ask Louru quesitons in the same way you'd ask a friend. We'll do our best to understand what you're looking for and check that against our large colection of local events to present you the ones best fit for you!
 
         Give these a try: 
         - Where can I listen to live music tonight?
@@ -225,9 +226,9 @@ with tab2:
 
         llm = OpenAI(openai_api_key=OPEN_AI_API_KEY,temperature=0)
         db_chain = SQLDatabaseChain(llm=llm, database=db, verbose=True)
-
-        response = db_chain.run(prompt)
+        response = db_chain(prompt)
 
         if response:
-            st.write(response)
+            st.write(response['result'])
+            #st.write(db_chain["intermediate_steps"])
 
