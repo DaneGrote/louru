@@ -132,7 +132,7 @@ with tab1:
         
 
         with st.chat_message("user"):
-            st.write("Thanks 🙏 Please confirm we understood you correctly, and press submit to share your awesome experience with the world!")
+            st.write("Sounds awesome 🥳 Please confirm we understood you correctly, and press submit to share your awesome experience with the world!")
             st.write("Feel free to make changes to the below before submitting.")
 
             with st.form('confirmationForm'):
@@ -182,7 +182,7 @@ with tab1:
                 submit = st.form_submit_button('Submit')
 
                 if submit:
-                    st.write(f"Thank you, your {form_response_df['event_type'].iloc[0]} is going to be a HIT! 🎉")
+                    st.write(f"Thanks 🙏 Your {form_response_df['event_type'].iloc[0]} is going to be a HIT! 🎉")
                     st.data_editor(form_response_df)
                     form_response_df.to_sql('experience_raw', con=sf_engine(), if_exists='append', index=False)
 
@@ -200,6 +200,19 @@ with tab2:
     Question: <prompt>
     Answer:
     """
+
+    st.header("Louru Explorer (Alpha) 🎸🍝🍻")
+    st.markdown(""" 
+        Welcome to the **Louru Experience Explorer**! We're here to help shine light on all the awesome experiences St. Louis has to offer.
+
+        **How it works:** Just ask Louru the same way you'd ask a friend. We'll do our best to understand what you're looking for and check that against our large colection of events and present you the ones best fit for you!
+
+        Give these a try: 
+        - Where can I listen to live music tonight?
+        - Are there any good happy hours in Soulard this weekend?
+    """)
+    st.write('')
+    st.write('')
 
     user_input = st.text_area("Whatcha lookin' for? ", "")
 
