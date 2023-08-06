@@ -15,7 +15,7 @@ from langchain.llms import OpenAI
 from langchain.prompts import ChatPromptTemplate
 from langchain import SQLDatabase
 
-from chain.SQLDatabaseChain import SQLDatabaseChain
+from chain.ExploreChain import ExploreChain
 
 OPEN_AI_API_KEY = st.secrets["open_api_key"]
 
@@ -182,7 +182,6 @@ with tab1:
 
                 if submit:
                     st.write(f"Thanks 🙏 Your {form_response_df['event_type'].iloc[0]} is going to be a HIT! 🎉")
-                    st.data_editor(form_response_df)
                     form_response_df.to_sql('experience_raw', con=sf_engine(), if_exists='append', index=False)
 
 with tab2:
@@ -225,7 +224,7 @@ with tab2:
         db = SQLDatabase.from_uri(connection_string)
 
         llm = OpenAI(openai_api_key=OPEN_AI_API_KEY,temperature=0)
-        db_chain = SQLDatabaseChain(llm=llm, database=db, verbose=True)
+        db_chain = ExploreChain(llm=llm, database=db, verbose=True)
         response = db_chain(prompt)
 
         if response:

@@ -18,16 +18,15 @@ from pydantic import Extra, Field, root_validator
 INTERMEDIATE_STEPS_KEY = "intermediate_steps"
 
 
-class SQLDatabaseChain(Chain):
+class ExploreChain(Chain):
     """Chain for interacting with SQL Database.
 
     Example:
         .. code-block:: python
 
-            from langchain_experimental.sql import SQLDatabaseChain
             from langchain import OpenAI, SQLDatabase
             db = SQLDatabase(...)
-            db_chain = SQLDatabaseChain.from_llm(OpenAI(), db)
+            db_chain = ExploreChain.from_llm(OpenAI(), db)
     """
 
     llm_chain: LLMChain
@@ -63,7 +62,7 @@ class SQLDatabaseChain(Chain):
     def raise_deprecation(cls, values: Dict) -> Dict:
         if "llm" in values:
             warnings.warn(
-                "Directly instantiating an SQLDatabaseChain with an llm is deprecated. "
+                "Directly instantiating an ExploreChain with an llm is deprecated. "
                 "Please instantiate with llm_chain argument or using the from_llm "
                 "class method."
             )
@@ -166,7 +165,8 @@ class SQLDatabaseChain(Chain):
 
             # TODO: Added condition to return static text if no results in query. can make it better
             elif result == '':
-                final_result = 'No Results, Sorry!'
+                final_result = "We're not finding anything like that right now.. Try something else!"
+
             else:
                 _run_manager.on_text("\nAnswer:", verbose=self.verbose)
                 input_text += f"{sql_cmd}\nSQLResult: {result}\nAnswer:"
@@ -201,7 +201,7 @@ class SQLDatabaseChain(Chain):
         db: SQLDatabase,
         prompt: Optional[BasePromptTemplate] = None,
         **kwargs: Any,
-    ) -> SQLDatabaseChain:
+    ) -> ExploreChain:
         prompt = prompt or SQL_PROMPTS.get(db.dialect, PROMPT)
         llm_chain = LLMChain(llm=llm, prompt=prompt)
         return cls(llm_chain=llm_chain, database=db, **kwargs)
@@ -218,7 +218,7 @@ class SQLDatabaseSequentialChain(Chain):
     """
 
     decider_chain: LLMChain
-    sql_chain: SQLDatabaseChain
+    sql_chain: ExploreChain
     input_key: str = "query"  #: :meta private:
     output_key: str = "result"  #: :meta private:
     return_intermediate_steps: bool = False
@@ -233,7 +233,7 @@ class SQLDatabaseSequentialChain(Chain):
         **kwargs: Any,
     ) -> SQLDatabaseSequentialChain:
         """Load the necessary chains."""
-        sql_chain = SQLDatabaseChain.from_llm(
+        sql_chain = ExploreChain.from_llm(
             llm, database, prompt=query_prompt, **kwargs
         )
         decider_chain = LLMChain(
