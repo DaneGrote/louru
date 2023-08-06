@@ -163,19 +163,20 @@ class SQLDatabaseChain(Chain):
             # final answer
             if self.return_direct:
                 final_result = result
+
+            # TODO: Added condition to return static text if no results in query. can make it better
+            elif result == '':
+                final_result = 'No Results, Sorry!'
             else:
                 _run_manager.on_text("\nAnswer:", verbose=self.verbose)
                 input_text += f"{sql_cmd}\nSQLResult: {result}\nAnswer:"
                 llm_inputs["input"] = input_text
                 intermediate_steps.append(llm_inputs)  # input: final answer
 
-                
-                #final_result = self.llm_chain.predict(
-                #    callbacks=_run_manager.get_child(),
-                #    **llm_inputs,
-                #).strip()
-
-                final_result = 'No Results, Sorry!' # Manual no results for now, will improve response later
+                final_result = self.llm_chain.predict(
+                    callbacks=_run_manager.get_child(),
+                    **llm_inputs,
+                ).strip()
 
                 intermediate_steps.append(final_result)  # output: final answer
                 _run_manager.on_text(final_result, color="green", verbose=self.verbose)
